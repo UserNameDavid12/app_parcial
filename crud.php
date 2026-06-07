@@ -11,6 +11,7 @@ if (!isset($_SESSION['user_id'])) {
 $conn = new mysqli('127.0.0.1', 'root', '1234', 'examen', 3306);
 if ($conn->connect_error) die("Conexión fallida: " . $conn->connect_error);
 
+// Procesar agregar, editar, eliminar
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['agregar'])) {
         $usuario = $_POST['usuario'];
@@ -49,52 +50,98 @@ $result = $conn->query("SELECT * FROM usuarios ORDER BY id");
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>CRUD Usuarios</title>
+    <title>CRUD Usuarios - Examen</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f8f9fa;
+        }
+        .table th, .table td {
+            vertical-align: middle;
+            text-align: center;
+        }
+        .btn-sm {
+            margin: 0 2px;
+        }
+        .card-header {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+    </style>
 </head>
-<body class="bg-light">
+<body>
 <div class="container mt-4">
-    <h2>CRUD de Usuarios</h2>
-    <p>Bienvenido, <?= htmlspecialchars($_SESSION['nombre']) ?> (<a href="logout.php">Cerrar sesión</a>)</p>
-
-    <div class="card mb-4">
-        <div class="card-header">Agregar nuevo usuario</div>
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h3 class="mb-0">CRUD de Usuarios</h3>
+        </div>
         <div class="card-body">
-            <form method="post">
-                <div class="row">
-                    <div class="col-md-3"><input type="text" name="usuario" class="form-control" placeholder="Usuario" required></div>
-                    <div class="col-md-3"><input type="password" name="password" class="form-control" placeholder="Contraseña" required></div>
-                    <div class="col-md-3"><input type="text" name="nombre" class="form-control" placeholder="Nombre"></div>
-                    <div class="col-md-3"><input type="email" name="email" class="form-control" placeholder="Email"></div>
+            <p class="text-end">Bienvenido, <strong><?= htmlspecialchars($_SESSION['nombre']) ?></strong> | <a href="logout.php">Cerrar sesión</a></p>
+
+            <!-- Formulario para agregar usuario -->
+            <div class="card mb-4 border-primary">
+                <div class="card-header bg-primary text-white">Agregar nuevo usuario</div>
+                <div class="card-body">
+                    <form method="post">
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <input type="text" name="usuario" class="form-control" placeholder="Usuario" required>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="password" name="password" class="form-control" placeholder="Contraseña" required>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="text" name="nombre" class="form-control" placeholder="Nombre">
+                            </div>
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <input type="email" name="email" class="form-control" placeholder="Email">
+                                    <button type="submit" name="agregar" class="btn btn-primary">Agregar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
                 </div>
-                <button type="submit" name="agregar" class="btn btn-primary mt-2">Agregar</button>
-            </form>
+            </div>
+
+            <!-- Tabla de usuarios -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>Contraseña</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php while ($row = $result->fetch_assoc()): ?>
+                        <tr>
+                            <form method="post" style="margin:0; padding:0;">
+                                <input type="hidden" name="id" value="<?= $row['id'] ?>">
+                                <td><?= $row['id'] ?></td>
+                                <td><input type="text" name="usuario" value="<?= htmlspecialchars($row['usuario']) ?>" class="form-control form-control-sm" required></td>
+                                <td><input type="text" name="password" value="<?= htmlspecialchars($row['password']) ?>" class="form-control form-control-sm" required></td>
+                                <td><input type="text" name="nombre" value="<?= htmlspecialchars($row['nombre']) ?>" class="form-control form-control-sm"></td>
+                                <td><input type="email" name="email" value="<?= htmlspecialchars($row['email']) ?>" class="form-control form-control-sm"></td>
+                                <td class="text-nowrap">
+                                    <button type="submit" name="editar" class="btn btn-sm btn-warning">Editar</button>
+                                    <a href="?delete=<?= $row['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar este usuario?')">Eliminar</a>
+                                </td>
+                            </form>
+                        </tr>
+                    <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-
-    <table class="table table-bordered table-striped">
-        <thead>
-            <tr><th>ID</th><th>Usuario</th><th>Contraseña</th><th>Nombre</th><th>Email</th><th>Acciones</th></tr>
-        </thead>
-        <tbody>
-        <?php while ($row = $result->fetch_assoc()): ?>
-            <form method="post" style="display: inline-block;">
-                <tr>
-                    <input type="hidden" name="id" value="<?= $row['id'] ?>"><?= $row['id'] ?>
-                </td>
-                <td><input type="text" name="usuario" value="<?= htmlspecialchars($row['usuario']) ?>" class="form-control form-control-sm"></td>
-                <td><input type="text" name="password" value="<?= htmlspecialchars($row['password']) ?>" class="form-control form-control-sm"></td>
-                <td><input type="text" name="nombre" value="<?= htmlspecialchars($row['nombre']) ?>" class="form-control form-control-sm"></td>
-                <td><input type="email" name="email" value="<?= htmlspecialchars($row['email']) ?>" class="form-control form-control-sm"></td>
-                <td>
-                    <button type="submit" name="editar" class="btn btn-sm btn-warning">Editar</button>
-                    <a href="?delete=<?= $row['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar?')">Eliminar</a>
-                </td>
-                </form>
-            </tr>
-        <?php endwhile; ?>
-        </tbody>
-    </table>
 </div>
 </body>
 </html>
